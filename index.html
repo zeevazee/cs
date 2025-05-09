@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cricket Score Calculator</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #e0f7fa, #ffffff);
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #004d40;
+            color: white;
+            padding: 20px;
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .button-container {
+            margin-top: 50px;
+        }
+
+        .menu-button {
+            background-color: #ff9800;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-button:hover {
+            background-color: #e65100;
+            transform: scale(1.05);
+        }
+
+        h2 {
+            color: #00695c;
+            margin-top: 40px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🏏 Cricket Score Calculator 🧮</h1>
+
+    <div class="button-container">
+        <a href="add-members.html"><button class="menu-button">Addssss Members</button></a>
+        <a href="start-match.html"><button class="menu-button">Start Match</button></a>
+    </div>
+
+    <!-- Removed Team Members and View Scores Section -->
+
+    <script>
+        // This script is only for adding members, if necessary.
+        function loadMembers() {
+            const members = JSON.parse(localStorage.getItem("members")) || [];
+            // This section has been removed, as you requested to remove the Team Members listing.
+        }
+
+        loadMembers();
+    </script>
+</body>
+</html>
