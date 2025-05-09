@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Match Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -81,7 +83,6 @@
     </style>
 </head>
 <body>
-
     <h1>🏏 Match Details</h1>
 
     <div id="teamSelection" class="team-selection">
@@ -115,30 +116,7 @@
             <button onclick="addWide()">Wide</button>
             <button onclick="swapStriker()">Swap Striker</button>
             <button onclick="undoLastAction()">Undo</button>
-          <!-- Existing "Chase Run" button -->
-<button onclick="chaseRun()">Chase Run</button>
-
-<script>
-    // Existing code...
-
-    function chaseRun() {
-    // Store Team 2's details in localStorage
-    localStorage.setItem("team2", JSON.stringify(team2));
-
-    // Store totalRuns and overs
-    localStorage.setItem("targetScore", totalRuns);
-
-    const selectedOvers = parseInt(document.getElementById("oversInput").value || "6");
-    localStorage.setItem("overs", selectedOvers);
-
-    // Redirect to chase-run.html
-    window.location.href = "chase-run.html";
-}
-
-
-    // Existing code...
-</script>
-
+            <button onclick="chaseRun()">Chase Run</button>
         </div>
 
         <h3>Scoreboard</h3>
@@ -171,7 +149,6 @@
     </a>
 
     <script>
-        
         const team1 = JSON.parse(localStorage.getItem("team1")) || [];
         const team2 = JSON.parse(localStorage.getItem("team2")) || [];
         let selectedBattingTeam = [];
@@ -228,127 +205,74 @@
         }
 
         function addRuns(runs) {
-    const striker = selectedBatters[currentBatterIndex];
-
-    // Store the action so we can undo it later
-    lastAction = {
-        type: "run",
-        player: striker,
-        runs,
-        wasStrikerIndex: currentBatterIndex
-    };
-
-    // Update the scores
-    scores[striker].runs += runs;
-    scores[striker].balls += 1;
-    totalRuns += runs;
-    totalBalls += 1;
-
-    if (runs === 4) scores[striker].fours += 1;
-    else if (runs === 6) scores[striker].sixes += 1;
-
-    // If 1 run, automatically swap the batters
-    if (runs === 1) {
-        swapStriker();  // Swap batters automatically after 1 run
-    }
-
-    if (runs % 2 === 1 && runs !== 1) swapStriker(); // Only swap if runs are odd but not 1 (to prevent double swapping)
-
-    // Increment the over count if the ball count reaches 6
-    if (totalBalls % 6 === 0) {
-        totalOversCompleted++;
-        swapStriker();  // Swap the batters after every over
-    }
-
-    // Calculate strike rate
-    calculateStrikeRate(striker);
-
-    // Update the scoreboard and match stats
-    updateScoreboard();
-    updateMatchStats();
-}
-
-
-
-
-
-        function addZero() {
             const striker = selectedBatters[currentBatterIndex];
+            lastAction = { type: "run", player: striker, runs, wasStrikerIndex: currentBatterIndex };
+            scores[striker].runs += runs;
             scores[striker].balls += 1;
+            totalRuns += runs;
             totalBalls += 1;
-            if (totalBalls % 6 === 0) totalOversCompleted++;
+
+            if (runs === 4) scores[striker].fours += 1;
+            else if (runs === 6) scores[striker].sixes += 1;
+
+            if (runs === 1 || (runs % 2 === 1 && runs !== 1)) swapStriker();
+            if (totalBalls % 6 === 0) {
+                totalOversCompleted++;
+                swapStriker();
+            }
+
             calculateStrikeRate(striker);
             updateScoreboard();
             updateMatchStats();
         }
 
         function addWide() {
-    lastAction = { type: "wide" };
+            lastAction = { type: "wide" };
+            wideBalls++;
+            totalRuns++;
+            updateScoreboard();
+            updateMatchStats();
+        }
 
-    wideBalls++;
-    totalRuns++;
-    updateScoreboard();
-    updateMatchStats();
-}
+        function addWicket() {
+            const outPlayer = selectedBatters[currentBatterIndex];
+            wickets++;
+            lastAction = { type: "wicket", player: outPlayer };
 
+            availableBatters = selectedBattingTeam.filter(player => !selectedBatters.includes(player));
 
-function addWicket() {
-    const outPlayer = selectedBatters[currentBatterIndex];
-    wickets++;
+            if (availableBatters.length > 0) {
+                const batterButtons = document.createElement("div");
+                availableBatters.forEach(batter => {
+                    const btn = document.createElement("button");
+                    btn.textContent = batter;
+                    btn.onclick = () => {
+                        selectedBatters[currentBatterIndex] = batter;
+                        scores[batter] = { runs: 0, fours: 0, sixes: 0, balls: 0 };
+                        lastAction.newPlayer = batter;
+                        document.getElementById("batterSelection").remove();
+                        updateScoreboard();
+                    };
+                    batterButtons.appendChild(btn);
+                });
 
-    lastAction = {
-        type: "wicket",
-        player: outPlayer
-    };
+                const batterSelectionDiv = document.createElement("div");
+                batterSelectionDiv.id = "batterSelection";
+                batterSelectionDiv.innerHTML = `<h3>Select New Batter</h3>`;
+                batterSelectionDiv.appendChild(batterButtons);
+                document.getElementById("matchSection").appendChild(batterSelectionDiv);
+            }
+        }
 
-    // Get the available batters (filter out already selected batters)
-    availableBatters = selectedBattingTeam.filter(player => !selectedBatters.includes(player));
-
-    if (availableBatters.length > 0) {
-        const batterButtons = document.createElement("div");
-        
-        // Create buttons for the available batters
-        availableBatters.forEach(batter => {
-            const btn = document.createElement("button");
-            btn.textContent = batter;
-            btn.onclick = () => {
-                // Replace the current batter with the new batter
-                selectedBatters[currentBatterIndex] = batter;
-                scores[batter] = { runs: 0, fours: 0, sixes: 0, balls: 0 };
-
-                lastAction.newPlayer = batter;
-
-                // Remove the batter selection section and update scoreboard
-                document.getElementById("batterSelection").remove();
-                updateScoreboard();
-            };
-            batterButtons.appendChild(btn);
-        });
-
-        // Create a div for batter selection with the appropriate message
-        const batterSelectionDiv = document.createElement("div");
-        batterSelectionDiv.id = "batterSelection";
-        batterSelectionDiv.innerHTML = `<h3>Select New Batter</h3>`;
-        batterSelectionDiv.appendChild(batterButtons);
-        
-        // Add the batter selection div to the match section
-        document.getElementById("matchSection").appendChild(batterSelectionDiv);
-    }
-}
-
-
-
-function swapStriker() {
-    currentBatterIndex = 1 - currentBatterIndex;
-    updateScoreboard();
-}
+        function swapStriker() {
+            currentBatterIndex = 1 - currentBatterIndex;
+            updateScoreboard();
+        }
 
         function calculateStrikeRate(player) {
             const p = scores[player];
             p.sr = p.balls ? ((p.runs / p.balls) * 100).toFixed(2) : "0.00";
         }
-
-        
 
         function updateScoreboard() {
             const table = document.getElementById("scoreboardTable");
@@ -368,42 +292,39 @@ function swapStriker() {
         }
 
         function undoLastAction() {
-    if (!lastAction) return;
+            if (!lastAction) return;
+            const { type, player, runs, wasStrikerIndex, newPlayer } = lastAction;
 
-    const { type, player, runs, wasStrikerIndex, newPlayer } = lastAction;
+            if (type === "run") {
+                scores[player].runs -= runs;
+                scores[player].balls -= 1;
+                totalRuns -= runs;
+                totalBalls -= 1;
+                if (runs === 4) scores[player].fours -= 1;
+                if (runs === 6) scores[player].sixes -= 1;
+                currentBatterIndex = wasStrikerIndex;
+                if (totalBalls % 6 === 5 && totalOversCompleted > 0) totalOversCompleted--;
+            } else if (type === "wide") {
+                wideBalls--;
+                totalRuns--;
+            } else if (type === "wicket") {
+                wickets--;
+                selectedBatters[currentBatterIndex] = player;
+                delete scores[newPlayer];
+            }
 
-    if (type === "run") {
-        scores[player].runs -= runs;
-        scores[player].balls -= 1;
-        totalRuns -= runs;
-        totalBalls -= 1;
-
-        if (runs === 4) scores[player].fours -= 1;
-        if (runs === 6) scores[player].sixes -= 1;
-
-        currentBatterIndex = wasStrikerIndex;
-
-        if (totalBalls % 6 === 5 && totalOversCompleted > 0) {
-            totalOversCompleted--;
+            updateScoreboard();
+            updateMatchStats();
+            lastAction = null;
         }
 
-    } else if (type === "wide") {
-        wideBalls -= 1;
-        totalRuns -= 1;
-
-    } else if (type === "wicket") {
-        wickets -= 1;
-        selectedBatters[currentBatterIndex] = player;
-        delete scores[newPlayer];
-    }
-
-    updateScoreboard();
-    updateMatchStats();
-    lastAction = null;
-}
-
-
-
+        function chaseRun() {
+            localStorage.setItem("team2", JSON.stringify(team2));
+            localStorage.setItem("targetScore", totalRuns);
+            const selectedOvers = parseInt(document.getElementById("oversInput").value || "6");
+            localStorage.setItem("overs", selectedOvers);
+            window.location.href = "chase-run.html";
+        }
     </script>
 </body>
 </html>
