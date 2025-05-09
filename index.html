@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Cricket Score Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             text-align: center;
@@ -16,11 +18,15 @@
             color: white;
             padding: 20px;
             margin: 0;
-            font-size: 32px;
+            font-size: 2rem;
         }
 
         .button-container {
-            margin-top: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin-top: 30px;
         }
 
         .menu-button {
@@ -28,15 +34,16 @@
             border: none;
             border-radius: 12px;
             color: white;
-            padding: 15px 30px;
+            padding: 1em 2em;
             text-align: center;
             text-decoration: none;
-            display: inline-block;
-            font-size: 18px;
-            margin: 20px;
+            font-size: 1rem;
+            margin: 15px 0;
             cursor: pointer;
             transition: 0.3s;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 300px;
         }
 
         .menu-button:hover {
@@ -52,7 +59,7 @@
         ul {
             list-style-type: none;
             padding: 0;
-            font-size: 18px;
+            font-size: 1rem;
             color: #333;
         }
     </style>
@@ -66,13 +73,11 @@
         <a href="start-match.html"><button class="menu-button">Start Match</button></a>
     </div>
 
-    <!-- Removed Team Members and View Scores Section -->
-
     <script>
         // This script is only for adding members, if necessary.
         function loadMembers() {
             const members = JSON.parse(localStorage.getItem("members")) || [];
-            // This section has been removed, as you requested to remove the Team Members listing.
+            // Removed member listing
         }
 
         loadMembers();
