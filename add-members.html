@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Members</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #e0f7fa, #ffffff);
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #004d40;
+            font-size: 32px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            font-size: 16px;
+            width: 250px;
+            border: 2px solid #26a69a;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .menu-button {
+            background-color: #ff9800;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 12px 25px;
+            text-align: center;
+            font-size: 16px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .menu-button:hover {
+            background-color: #e65100;
+            transform: scale(1.05);
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 30px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        li {
+            background-color: #fff3e0;
+            padding: 10px;
+            margin: 8px auto;
+            width: 60%;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .back-button {
+            margin-top: 40px;
+            background-color: #00897b;
+        }
+
+        .back-button:hover {
+            background-color: #00695c;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Add New Team Member</h1>
+
+    <input type="text" id="memberName" placeholder="Enter member name">
+    <button class="menu-button" onclick="addMember()">Add Member</button>
+
+    <ul id="memberList"></ul>
+
+    <a href="index.html">
+        <button class="menu-button back-button">Back to Home</button>
+    </a>
+
+    <script>
+        function addMember() {
+            const nameInput = document.getElementById("memberName");
+            const name = nameInput.value.trim();
+
+            if (name !== "") {
+                let members = JSON.parse(localStorage.getItem("members")) || [];
+                members.push(name);
+                localStorage.setItem("members", JSON.stringify(members));
+                nameInput.value = "";
+                showMembers();
+            } else {
+                alert("Please enter a name.");
+            }
+        }
+
+        function showMembers() {
+            const members = JSON.parse(localStorage.getItem("members")) || [];
+            const list = document.getElementById("memberList");
+            list.innerHTML = "";
+            members.forEach(member => {
+                const li = document.createElement("li");
+                li.textContent = member;
+                list.appendChild(li);
+            });
+        }
+
+        showMembers();
+    </script>
+
+</body>
+</html>

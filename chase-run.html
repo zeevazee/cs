@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chase Innings</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #fff3e0, #ffffff);
+            text-align: center;
+            padding: 30px;
+        }
+
+        h1, h2, h3 {
+            color: #bf360c;
+        }
+
+        button {
+            background-color: #ff7043;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #e64a19;
+            transform: scale(1.05);
+        }
+
+        .score-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #ffe0b2;
+        }
+
+        td {
+            background-color: #ffffff;
+        }
+
+        .match-stats {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🏏 Chase Innings</h1>
+<h2>Target: <span id="targetScore">0</span> Runs</h2>
+
+<div id="playerSelection">
+    <h3>Select Two Batters</h3>
+    <div id="playerButtons"></div>
+</div>
+
+<div id="matchSection" style="display:none;">
+    <h3>Batters:</h3>
+    <div id="battersList"></div>
+
+    <div class="score-buttons">
+        <button onclick="addRuns(0)">0</button>
+        <button onclick="addRuns(1)">1</button>
+        <button onclick="addRuns(2)">2</button>
+        <button onclick="addRuns(3)">3</button>
+        <button onclick="addRuns(4)">4</button>
+        <button onclick="addRuns(6)">6</button>
+        <button onclick="addWicket()">Wicket</button>
+        <button onclick="addWide()">Wide</button>
+        <button onclick="swapStriker()">Swap Striker</button>
+        <button onclick="undoLastAction()">Undo</button>
+    </div>
+
+    <h3>Scoreboard</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Player</th>
+            <th>Runs</th>
+            <th>4s</th>
+            <th>6s</th>
+            <th>Balls</th>
+            <th>SR</th>
+        </tr>
+        </thead>
+        <tbody id="scoreboardTable"></tbody>
+    </table>
+
+    <div class="match-stats">
+        <p>Total Runs: <span id="totalRuns">0</span></p>
+        <p>Wickets: <span id="totalWickets">0</span></p>
+        <p>Wide Balls: <span id="wideBalls">0</span></p>
+        <p>Overs: <span id="oversCount">0.0</span></p>
+        <p>Remaining Runs: <span id="remainingRuns">0</span></p>
+        <p>Remaining Balls: <span id="remainingBalls">0</span></p>
+        <p><strong id="resultMsg"></strong></p>
+    </div>
+
+    <div id="newBatterSelection"></div>
+</div>
+
+<a href="start-match.html"><button>Back to Home</button></a>
+
+<script>
+    const team2 = JSON.parse(localStorage.getItem("team2")) || [];
+    const target = parseInt(localStorage.getItem("targetScore") || "0");
+    const overs = parseInt(localStorage.getItem("overs") || "6");
+
+    document.getElementById("targetScore").textContent = target;
+
+    let selectedBatters = [];
+    let scores = {};
+    let currentBatterIndex = 0;
+    let totalRuns = 0;
+    let totalBalls = 0;
+    let totalOversCompleted = 0;
+    let wideBalls = 0;
+    let wickets = 0;
+    let lastAction = null;
+
+    const playerButtons = document.getElementById("playerButtons");
+    team2.forEach(player => {
+        const btn = document.createElement("button");
+        btn.textContent = player;
+        btn.onclick = () => selectBatter(player);
+        playerButtons.appendChild(btn);
+    });
+
+    function selectBatter(player) {
+        if (selectedBatters.length < 2 && !selectedBatters.includes(player)) {
+            selectedBatters.push(player);
+            scores[player] = { runs: 0, fours: 0, sixes: 0, balls: 0 };
+            if (selectedBatters.length === 2) {
+                document.getElementById("playerSelection").style.display = "none";
+                document.getElementById("matchSection").style.display = "block";
+                updateScoreboard();
+            }
+        }
+    }
+
+    function addRuns(runs) {
+        const striker = selectedBatters[currentBatterIndex];
+        lastAction = { type: "run", player: striker, runs, wasStrikerIndex: currentBatterIndex };
+
+        scores[striker].runs += runs;
+        scores[striker].balls += 1;
+        totalRuns += runs;
+        totalBalls += 1;
+
+        if (runs === 4) scores[striker].fours += 1;
+        else if (runs === 6) scores[striker].sixes += 1;
+
+        if (runs === 1 || runs % 2 === 1) swapStriker();
+
+        if (totalBalls % 6 === 0) totalOversCompleted++;
+
+        calculateStrikeRate(striker);
+        updateScoreboard();
+        updateStats();
+        checkResult();
+    }
+
+    function addWide() {
+        wideBalls++;
+        totalRuns++;
+        lastAction = { type: "wide" };
+        updateStats();
+        checkResult();
+    }
+
+    function addWicket() {
+        const outPlayer = selectedBatters[currentBatterIndex];
+        wickets++;
+        lastAction = { type: "wicket", player: outPlayer };
+
+        const available = team2.filter(p => !selectedBatters.includes(p));
+        if (available.length > 0) {
+            const selDiv = document.getElementById("newBatterSelection");
+            selDiv.innerHTML = "<h3>Select New Batter</h3>";
+            available.forEach(batter => {
+                const btn = document.createElement("button");
+                btn.textContent = batter;
+                btn.onclick = () => {
+                    selectedBatters[currentBatterIndex] = batter;
+                    scores[batter] = { runs: 0, fours: 0, sixes: 0, balls: 0 };
+                    lastAction.newPlayer = batter;
+                    selDiv.innerHTML = "";
+                    updateScoreboard();
+                };
+                selDiv.appendChild(btn);
+            });
+        } else {
+            checkResult(true); // all out
+        }
+    }
+
+    function swapStriker() {
+        currentBatterIndex = 1 - currentBatterIndex;
+        updateScoreboard();
+    }
+
+    function undoLastAction() {
+        if (!lastAction) return;
+
+        const { type, player, runs, wasStrikerIndex, newPlayer } = lastAction;
+
+        if (type === "run") {
+            scores[player].runs -= runs;
+            scores[player].balls -= 1;
+            totalRuns -= runs;
+            totalBalls -= 1;
+            if (runs === 4) scores[player].fours -= 1;
+            if (runs === 6) scores[player].sixes -= 1;
+            currentBatterIndex = wasStrikerIndex;
+            if (totalBalls % 6 === 5 && totalOversCompleted > 0) totalOversCompleted--;
+        } else if (type === "wide") {
+            wideBalls--;
+            totalRuns--;
+        } else if (type === "wicket") {
+            wickets--;
+            selectedBatters[currentBatterIndex] = player;
+            delete scores[newPlayer];
+        }
+
+        updateScoreboard();
+        updateStats();
+        lastAction = null;
+        document.getElementById("newBatterSelection").innerHTML = "";
+        document.getElementById("resultMsg").textContent = "";
+    }
+
+    function calculateStrikeRate(player) {
+        const p = scores[player];
+        p.sr = p.balls ? ((p.runs / p.balls) * 100).toFixed(2) : "0.00";
+    }
+
+    function updateScoreboard() {
+        const table = document.getElementById("scoreboardTable");
+        table.innerHTML = "";
+        selectedBatters.forEach(player => {
+            const p = scores[player];
+            table.innerHTML += `<tr><td>${player}</td><td>${p.runs}</td><td>${p.fours}</td><td>${p.sixes}</td><td>${p.balls}</td><td>${p.sr}</td></tr>`;
+        });
+    }
+
+    function updateStats() {
+        document.getElementById("totalRuns").textContent = totalRuns;
+        document.getElementById("totalWickets").textContent = wickets;
+        document.getElementById("wideBalls").textContent = wideBalls;
+        document.getElementById("oversCount").textContent = `${Math.floor(totalBalls / 6)}.${totalBalls % 6}`;
+
+        // Calculate remaining runs and balls
+        const remainingRuns = target - totalRuns;
+        const remainingBalls = (overs * 6) - totalBalls;
+        document.getElementById("remainingRuns").textContent = remainingRuns > 0 ? remainingRuns : 0;
+        document.getElementById("remainingBalls").textContent = remainingBalls > 0 ? remainingBalls : 0;
+    }
+
+    function checkResult(allOut = false) {
+        const resultMsg = document.getElementById("resultMsg");
+        if (totalRuns > target) {
+            resultMsg.textContent = "🎉 Team 2 Wins!";
+        } else if ((allOut || Math.floor(totalBalls / 6) >= overs) && totalRuns < target) {
+            resultMsg.textContent = "🏆 Team 1 Wins!";
+        } else if ((allOut || Math.floor(totalBalls / 6) >= overs) && totalRuns === target) {
+            resultMsg.textContent = "🤝 Match Tied!";
+        }
+    }
+</script>
+
+</body>
+</html>

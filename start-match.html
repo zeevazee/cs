@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Match - Select Teams</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #e0f7fa, #ffffff);
+            text-align: center;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #004d40;
+            font-size: 32px;
+        }
+
+        .team-buttons button, .start-button, .back-button {
+            background-color: #ff9800;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .team-buttons button:hover, .start-button:hover, .back-button:hover {
+            background-color: #e65100;
+            transform: scale(1.05);
+        }
+
+        .section {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .column {
+            width: 300px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            font-size: 18px;
+        }
+
+        li {
+            background-color: #fff3e0;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        li:hover {
+            background-color: #ffe0b2;
+        }
+
+        h2 {
+            color: #00695c;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🏏 Start Match – Select Teams</h1>
+
+    <div class="team-buttons">
+        <button onclick="selectTeam(1)">Select Team 1</button>
+        <button onclick="selectTeam(2)">Select Team 2</button>
+    </div>
+
+    <div class="section">
+        <div class="column">
+            <h2>Available Players</h2>
+            <ul id="availablePlayers"></ul>
+        </div>
+
+        <div class="column">
+            <h2>Team 1</h2>
+            <ul id="team1List"></ul>
+        </div>
+
+        <div class="column">
+            <h2>Team 2</h2>
+            <ul id="team2List"></ul>
+        </div>
+    </div>
+
+    <button class="start-button" onclick="startMatch()">Start Match</button>
+    <a href="index.html"><button class="back-button">Back to Home</button></a>
+
+    <script>
+        let selectedTeam = 1;
+        let allPlayers = JSON.parse(localStorage.getItem("members")) || ["Player A", "Player B", "Player C", "Player D", "Player E", "Player F", "Player G", "Player H"];
+        let team1 = [];
+        let team2 = [];
+
+        function selectTeam(teamNumber) {
+            selectedTeam = teamNumber;
+            alert(`Now selecting players for Team ${teamNumber}`);
+        }
+
+        function renderPlayers() {
+    const available = document.getElementById("availablePlayers");
+    available.innerHTML = "";
+    const used = [...team1, ...team2];
+    
+    // Remove duplicates by using Set to get unique player names
+    const availableList = Array.from(new Set(allPlayers.filter(p => !used.includes(p))));
+    
+    availableList.forEach(player => {
+        const li = document.createElement("li");
+        li.textContent = player;
+        li.onclick = () => assignPlayer(player);
+        available.appendChild(li);
+    });
+}
+
+        function assignPlayer(player) {
+            if (selectedTeam === 1) {
+                team1.push(player);
+            } else {
+                team2.push(player);
+            }
+            renderTeams();
+            renderPlayers();
+        }
+
+        function removePlayer(player) {
+            if (team1.includes(player)) {
+                team1 = team1.filter(p => p !== player);
+            } else if (team2.includes(player)) {
+                team2 = team2.filter(p => p !== player);
+            }
+            renderTeams();
+            renderPlayers();
+        }
+
+        function renderTeams() {
+            document.getElementById("team1List").innerHTML = team1.map(p => `<li onclick="removePlayer('${p}')">${p}</li>`).join("");
+            document.getElementById("team2List").innerHTML = team2.map(p => `<li onclick="removePlayer('${p}')">${p}</li>`).join("");
+        }
+
+        function startMatch() {
+            localStorage.setItem("team1", JSON.stringify(team1));
+            localStorage.setItem("team2", JSON.stringify(team2));
+            window.location.href = "details.html";
+        }
+
+        renderPlayers();
+        renderTeams();
+    </script>
+
+</body>
+</html>
